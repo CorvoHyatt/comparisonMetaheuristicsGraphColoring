@@ -156,7 +156,7 @@ class GeneticAlgorithm:
 
         if (
             self.stopping_criteria_type == "function_calls"
-            and self.function_call_counter <= self.max_call_functions
+            and self.function_call_counter >= self.max_call_functions
         ):
             return False
         if (

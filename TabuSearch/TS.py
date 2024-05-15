@@ -23,11 +23,15 @@ class TabuSearch(object):
         max_nochange_best: int = None,
         long_term_memory_reset: bool = True,
         problem_type: Literal["COP", "BenchMark"] = "BenchMark",
+        limits: tuple[int, int] = [0, 32],
+        precision: float = 0.00001,
+        variables: int = 1,
         min_or_max: Literal["min", "max"] = "min",
         codification: Literal[
             "binary", "permutation", "combination", "real"
         ] = "permutation",
     ) -> None:
+
         self.first_point = first_point
         self.tabu_list_size = tabu_list_size
         self.number_of_points = number_of_points
@@ -40,6 +44,9 @@ class TabuSearch(object):
         self.max_nochange_best = max_nochange_best
         self.long_term_memory_reset = long_term_memory_reset
         self.problem_type = problem_type
+        self.limits = limits
+        self.precision = precision
+        self.variables = variables
         self.min_or_max = min_or_max
         self.codification = codification
 
@@ -59,7 +66,6 @@ class TabuSearch(object):
         self.objetive = objetive
         self.best = objetive(self.first_point)
         self.actual_solution_value = self.best
-        self.function_call_counter += 1
         self._cost_best.append(self.best)
 
     def stopping_criteria(self) -> bool:
@@ -71,7 +77,7 @@ class TabuSearch(object):
 
         if (
             self.stopping_criteria_type == "function_calls"
-            and self.function_call_counter <= self.max_call_functions
+            and self.function_call_counter >= self.max_call_functions
         ):
             return False
         if (
@@ -90,31 +96,41 @@ class TabuSearch(object):
 
     def move(self, actual_solution: list[int]) -> dict:
         points = []
+
         # Permutation
         if self.codification == "permutation":
             for _ in range(self.number_of_points):
 
-                neighbor_val = actual_solution.copy()
+                point_val = actual_solution.copy()
                 idx1, idx2 = np.random.choice(len(actual_solution), 2, replace=False)
                 while idx1 == idx2:
                     idx2 = np.random.choice(len(actual_solution))
 
-                neighbor_val[idx1], neighbor_val[idx2] = (
-                    neighbor_val[idx2],
-                    neighbor_val[idx1],
+                point_val[idx1], point_val[idx2] = (
+                    point_val[idx2],
+                    point_val[idx1],
                 )
-                neighbor = (f"{idx1},{idx2}", neighbor_val)
-                points.append(neighbor)
+                point = (f"{idx1},{idx2}", point_val)
+                points.append(point)
 
         # Combination
         if self.codification == "combination":
             for _ in range(self.number_of_points):
-                neighbor_val = actual_solution.copy()
+                point_val = actual_solution.copy()
                 idx = np.random.choice(len(actual_solution), replace=False)
-                neighbor_val[idx] = np.random.choice(len(actual_solution)) + 1
-                neighbor = (f"{idx},{neighbor_val[idx]}", neighbor_val)
-                points.append(neighbor)
-        # TODO Binary
+                point_val[idx] = np.random.choice(len(actual_solution)) + 1
+                point = (f"{idx},{point_val[idx]}", point_val)
+                points.append(point)
+
+        # Binary
+        if self.codification == "binary":
+            for _ in range(self.number_of_points):
+                point_val = actual_solution.copy()
+                idx = np.random.randint(0, len(actual_solution))
+                point_val[idx] = 1 - point_val[idx]
+                point = (f"{idx},{point_val[idx]}", point_val)
+                points.append(point)
+
         self.points = points
 
         return points
@@ -179,11 +195,8 @@ class TabuSearch(object):
                     self._cost_actual.append(optimal_value[4])
                     return True
             else:
-                # optimal_value = (min if self.min_or_max == "min" else max)(
-                #     resultados_, key=lambda punto: punto[2]
-                # )
+
                 self.best_nochange_conunter += 1
-                # self._cost_actual.append(optimal_value[2])
                 self._cost_actual.append(self.actual_solution_value)
                 return True
 
@@ -203,7 +216,6 @@ class TabuSearch(object):
 
         if self.long_term_memory_reset == True:
             self.long_term_memory = {}
-            # self.tabu_list = ["" for _ in range(self.tabu_list_size)]
 
         self.best_nochange_conunter += 1
         self.actual_solution = optimal_value[1]
@@ -238,6 +250,7 @@ class TabuSearch(object):
             self.long_term_memory[value[0]] = 1
 
     def fit(self, objetive) -> list:
+        decimal = len(str(calcular_modulo(self.precision))) - 1
         self._clear(objetive)
         tiempo_inicio = time.time()
         while self.stopping_criteria():
@@ -246,7 +259,9 @@ class TabuSearch(object):
 
             self._cost_best.append(self.best)
             sys.stderr.write(
-                "\r iterations %d | call_functions %d | Best: %.2f | actual_sol: %.2f"
+                "\r iterations %d | call_functions %d | Best: %.{}f | actual_sol: %.{}f".format(
+                    decimal, decimal
+                )
                 % (
                     self.iterations,
                     self.function_call_counter,
@@ -259,8 +274,11 @@ class TabuSearch(object):
             self.iterations += 1
         tiempo_fin = time.time()
         tiempo_total = tiempo_fin - tiempo_inicio
+        sys.stderr.flush()
         sys.stderr.write(
-            "\r iterations %d | call_functions %d | Best: %.2f | actual_sol: %.2f"
+            "\r iterations %d | call_functions %d | Best: %.{}f | actual_sol: %.{}f".format(
+                decimal, decimal
+            )
             % (
                 self.iterations,
                 self.function_call_counter,

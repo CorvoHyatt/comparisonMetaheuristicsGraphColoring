@@ -9,6 +9,11 @@ import pandas as pd
 class SimulatedAnnealing(object):
     def __init__(
         self,
+        stopping_criteria_type: Literal[
+            "function_calls",
+            "default",
+        ] = "function_calls",
+        max_call_functions=100,
         restriction_fun=None,
         problem_type: Literal["COP", "BenchMark"] = "BenchMark",
         codification: Literal["binary", "permutation", "combination", "real"] = "real",
@@ -24,6 +29,8 @@ class SimulatedAnnealing(object):
         temperature: float = 200,
         final_temperature: float = 0.1,
     ) -> None:
+        self.stopping_criteria_type = stopping_criteria_type
+        self.max_call_functions = max_call_functions
         self.restriction_fun = restriction_fun
         self.problem_type = problem_type
         self.codification = codification
@@ -48,7 +55,7 @@ class SimulatedAnnealing(object):
 
         if (
             self.stopping_criteria_type == "function_calls"
-            and self.function_call_counter <= self.max_call_functions
+            and self.function_call_counter >= self.max_call_functions
         ):
             return False
         elif (
@@ -56,31 +63,8 @@ class SimulatedAnnealing(object):
             and self.temperature > self.final_temperature
         ):
             return False
-        elif (
-            self.stopping_criteria_type == "found_optimal"
-            and self.best == self.optimal_solution
-        ):
-            return False
 
         return True
-
-    def cost_function(self, f, solution):
-        if self.codification == "binary":
-            return f(
-                solution,
-                self.bits_enteros,
-                self.bits_decimales,
-                self.variables,
-                self.precision,
-            )
-
-        elif self.codification == "combination":
-            return f(solution, self.graph)
-
-        elif self.codification == "permutation":
-            return f(solution, self.flows, self.distances)
-
-        return False
 
     def create_first_solution(self):
         first_solution = []
@@ -117,7 +101,6 @@ class SimulatedAnnealing(object):
 
         elif self.codification == "combination":
 
-            # neighbor = np.random.randint(1, self.limits[1] + 1, size=self.limits[1])
             neighbor = actual_solution.copy()
             idx = np.random.choice(len(actual_solution), replace=False)
             neighbor[idx] = np.random.choice(len(actual_solution)) + 1
@@ -151,6 +134,7 @@ class SimulatedAnnealing(object):
 
     def fit(self, objetive):
         self.cost_ = []
+        self.function_call_counter = 0
         actual_solutions = self.create_first_solution()
         epoch = 0
         number_tested_solution = 0
@@ -165,7 +149,11 @@ class SimulatedAnnealing(object):
             while i < self.equilibrium:
                 random_solutions = self.create_neighbor_solution(actual_solutions)
                 number_tested_solution += 1
-                delta_E = objetive(random_solutions) - objetive(actual_solutions)
+                fxyrand = objetive(random_solutions)
+                fxy = objetive(actual_solutions)
+                delta_E = fxyrand - fxy
+                self.function_call_counter += 2
+                aceptance_flag = False
                 if validar_min_max(delta_E, self.min_or_max):
                     actual_solutions = random_solutions.copy()
                     optimal = actual_solutions
@@ -175,10 +163,13 @@ class SimulatedAnnealing(object):
                         actual_solutions = random_solutions.copy()
                         number_worst_solution_acepted += 1
                         optimal = actual_solutions
+                        aceptance_flag = True
 
-                fxy = 0
-                fxy = objetive(actual_solutions)
-                self.cost_.append(fxy)
+                if aceptance_flag:
+                    self.cost_.append(fxyrand)
+                else:
+                    self.cost_.append(fxy)
+
                 epoch_strlen = len(str(epoch))
 
                 imprimir_valores(
@@ -189,12 +180,14 @@ class SimulatedAnnealing(object):
                     self.temperature,
                     fxy,
                     aceptanced,
+                    self.function_call_counter,
                 )
                 i += 1
                 epoch += 1
             aceptanced = number_worst_solution_acepted * 100 / number_tested_solution
             self.temperature = self.update_temperature(self.temperature, i)
-            tiempo_fin = time.time()
+
+        tiempo_fin = time.time()
         tiempo_total = tiempo_fin - tiempo_inicio
         print(
             f"Tiempo de ejecución: {int(tiempo_total // 3600):02d}:{int((tiempo_total % 3600) // 60):02d}:{int(tiempo_total % 60):02d}"

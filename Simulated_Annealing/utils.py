@@ -97,10 +97,12 @@ def convert_to_binary(numero, num_bits):
     return arreglo_binario
 
 
-def imprimir_valores(decimal, epoch_strlen, epoch, i, temperature, fxy, aceptanced):
+def imprimir_valores(
+    decimal, epoch_strlen, epoch, i, temperature, fxy, aceptanced, function_call_counter
+):
     sys.stderr.write(
         "\r%0*d Epoch | Equilibrium %d | Temperature %.2f "
-        "| Cost function: %.{}f  | Aceptance : %.2f".format(decimal)
+        "| Cost function: %.{}f  | Aceptance: %.2f | Function Call: %d".format(decimal)
         % (
             epoch_strlen,
             epoch + 1,
@@ -108,6 +110,7 @@ def imprimir_valores(decimal, epoch_strlen, epoch, i, temperature, fxy, aceptanc
             temperature,
             fxy,
             aceptanced,
+            function_call_counter,
         )
     )
 
