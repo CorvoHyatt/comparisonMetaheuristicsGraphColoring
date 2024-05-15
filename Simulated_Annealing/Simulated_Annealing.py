@@ -14,8 +14,8 @@ class SimulatedAnnealing(object):
             "default",
         ] = "function_calls",
         max_call_functions=100,
-        restriction_fun=None,
         verbose=False,
+        restriction_fun=None,
         problem_type: Literal["COP", "BenchMark"] = "BenchMark",
         codification: Literal["binary", "permutation", "combination", "real"] = "real",
         cooling: Literal["linear", "geometric", "logarithmic"] = "geometric",
@@ -31,6 +31,7 @@ class SimulatedAnnealing(object):
         final_temperature: float = 0.1,
     ) -> None:
         self.verbose = verbose
+
         self.stopping_criteria_type = stopping_criteria_type
         self.max_call_functions = max_call_functions
         self.restriction_fun = restriction_fun
@@ -48,7 +49,7 @@ class SimulatedAnnealing(object):
         self.temperature = temperature
         self.final_temperature = final_temperature
 
-        if problem_type == "BenchMark":
+        if self.problem_type == "BenchMark":
             self.bits_enteros, self.bits_decimales = calcular_bits(
                 self.limits[1], self.precision
             )

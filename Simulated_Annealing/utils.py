@@ -1,12 +1,15 @@
 import math
-import sys
-
 import numpy as np
 
 
-def decodificar_solución(
-    solucion, bits_enteros, bits_decimales, solution_len, precision
-):
+def calcular_bits(rango_entero: int, precision: float):
+    bits_enteros = math.ceil(math.log2(rango_entero))
+
+    bits_decimales = math.ceil(math.log2(1 / precision))
+    return bits_enteros, bits_decimales
+
+
+def decodificar_solución(solucion, bits_enteros, bits_decimales, precision):
     tamano_soluciones = bits_enteros + bits_decimales + 1
     sub_arreglos = extraer_subarreglos(solucion, tamano_soluciones)
     sub_arreglos = list(
@@ -60,27 +63,6 @@ def validar_decimal(arreglo, indice_inicio_decimal, precision):
     return arreglo
 
 
-# Posiblemente se zumba alv esta funcion
-# def invertir_bit_valido(arreglo, indice_inicio_decimal, precision):
-
-#     indice = np.random.randint(0, len(arreglo))
-#     arreglo[indice] = 1 - arreglo[indice]
-#     parte_decimal = int("".join(map(str, arreglo[indice_inicio_decimal:])), 2)
-#     modulo = calcular_modulo(precision)
-#     arreglo[indice_inicio_decimal:] = convert_to_binary(
-#         parte_decimal % modulo, len(arreglo) - indice_inicio_decimal
-#     )
-
-#     return arreglo
-
-
-def calcular_bits(rango_entero: int, precision: float):
-    bits_enteros = math.ceil(math.log2(rango_entero))
-
-    bits_decimales = math.ceil(math.log2(1 / precision))
-    return bits_enteros, bits_decimales
-
-
 def calcular_modulo(precision):
     modulo = int(1 / precision) + 1
     return modulo
@@ -95,23 +77,3 @@ def convert_to_binary(numero, num_bits):
         arreglo_binario.insert(0, 0)  # Agregar ceros al principio
 
     return arreglo_binario
-
-
-def imprimir_valores(
-    decimal, epoch_strlen, epoch, i, temperature, fxy, aceptanced, function_call_counter
-):
-    sys.stderr.write(
-        "\r%0*d Epoch | Equilibrium %d | Temperature %.2f "
-        "| Cost function: %.{}f  | Aceptance: %.2f | Function Call: %d".format(decimal)
-        % (
-            epoch_strlen,
-            epoch + 1,
-            i + 1,
-            temperature,
-            fxy,
-            aceptanced,
-            function_call_counter,
-        )
-    )
-
-    sys.stderr.flush()
