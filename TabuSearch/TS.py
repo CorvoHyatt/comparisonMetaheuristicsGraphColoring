@@ -2,7 +2,7 @@ import sys
 import time
 import numpy as np
 from typing import Literal
-from utils import *
+from .utils import *
 from IPython.display import clear_output
 
 
@@ -39,9 +39,6 @@ class TabuSearch(object):
         self.optimal_solution = optimal_solution
         self.max_nochange_best = max_nochange_best
         self.long_term_memory_reset = long_term_memory_reset
-        # self.number_of_points = int(
-        #     (len(first_point)) * ((len(first_point) - 1) / 2)
-        # )
         self.problem_type = problem_type
         self.min_or_max = min_or_max
         self.codification = codification

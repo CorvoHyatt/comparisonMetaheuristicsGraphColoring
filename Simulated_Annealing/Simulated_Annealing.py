@@ -2,7 +2,7 @@ from typing import Literal
 import numpy as np
 import math
 import time
-from utils import *
+from .utils import *
 import pandas as pd
 
 
@@ -43,6 +43,26 @@ class SimulatedAnnealing(object):
             self.bits_enteros, self.bits_decimales = calcular_bits(
                 self.limits[1], self.precision
             )
+
+    def stopping_criteria(self) -> bool:
+
+        if (
+            self.stopping_criteria_type == "function_calls"
+            and self.function_call_counter <= self.max_call_functions
+        ):
+            return False
+        elif (
+            self.stopping_criteria_type == "default"
+            and self.temperature > self.final_temperature
+        ):
+            return False
+        elif (
+            self.stopping_criteria_type == "found_optimal"
+            and self.best == self.optimal_solution
+        ):
+            return False
+
+        return True
 
     def cost_function(self, f, solution):
         if self.codification == "binary":
@@ -138,7 +158,7 @@ class SimulatedAnnealing(object):
         decimal = len(str(calcular_modulo(self.precision))) - 1
         tiempo_inicio = time.time()
         optimal = []
-        while self.temperature > self.final_temperature:
+        while self.stopping_criteria():
 
             number_worst_solution_acepted = 0
             i = 0
@@ -180,4 +200,3 @@ class SimulatedAnnealing(object):
             f"Tiempo de ejecución: {int(tiempo_total // 3600):02d}:{int((tiempo_total % 3600) // 60):02d}:{int(tiempo_total % 60):02d}"
         )
         return optimal
-        # print(f"Temperatura actualizada: {temperature}")
