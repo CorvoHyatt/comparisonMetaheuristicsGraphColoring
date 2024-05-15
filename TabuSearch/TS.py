@@ -12,6 +12,7 @@ class TabuSearch(object):
         first_point,
         tabu_list_size,
         number_of_points,
+        verbose=False,
         diversification_type: Literal["static", "oscillation", "None"] = "static",
         diversification_size: int = 20,
         stopping_criteria_type: Literal[
@@ -32,6 +33,7 @@ class TabuSearch(object):
         ] = "permutation",
     ) -> None:
 
+        self.verbose = verbose
         self.first_point = first_point
         self.tabu_list_size = tabu_list_size
         self.number_of_points = number_of_points
@@ -258,25 +260,26 @@ class TabuSearch(object):
             self.evaluate_points()
 
             self._cost_best.append(self.best)
-            sys.stderr.write(
-                "\r iterations %d | call_functions %d | Best: %.{}f | actual_sol: %.{}f".format(
-                    decimal, decimal
+            if self.verbose:
+                sys.stderr.write(
+                    "\r iterations %d | call_functions %d | Best: %.{}f | actual_sol: %.{}f".format(
+                        decimal, decimal
+                    )
+                    % (
+                        self.iterations,
+                        self.function_call_counter,
+                        self.best,
+                        self.actual_solution_value,
+                    )
                 )
-                % (
-                    self.iterations,
-                    self.function_call_counter,
-                    self.best,
-                    self.actual_solution_value,
-                )
-            )
+                sys.stderr.flush()
 
-            sys.stderr.flush()
             self.iterations += 1
         tiempo_fin = time.time()
         tiempo_total = tiempo_fin - tiempo_inicio
-        sys.stderr.flush()
-        sys.stderr.write(
-            "\r iterations %d | call_functions %d | Best: %.{}f | actual_sol: %.{}f".format(
+
+        print(
+            "\riterations %d | call_functions %d | Best: %.{}f | actual_sol: %.{}f".format(
                 decimal, decimal
             )
             % (
@@ -286,6 +289,7 @@ class TabuSearch(object):
                 self.actual_solution_value,
             )
         )
+        print(f"Solucion: {self.actual_solution}")
         print(
             f"Tiempo de ejecución: {int(tiempo_total // 3600):02d}:{int((tiempo_total % 3600) // 60):02d}:{int(tiempo_total % 60):02d}"
         )

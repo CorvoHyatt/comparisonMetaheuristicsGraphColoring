@@ -2,6 +2,28 @@ import math
 import numpy as np
 
 
+# Función para calcular la desviación estándar
+def calcular_desviacion_estandar(datos):
+    media = sum(datos) / len(datos)
+    varianza = sum((x - media) ** 2 for x in datos) / len(datos)
+    return varianza**0.5
+
+
+def calcular_mediana(arreglo):
+    # Ordena el arreglo
+    arreglo_ordenado = sorted(arreglo)
+    n = len(arreglo_ordenado)
+
+    # Si la cantidad de elementos es impar
+    if n % 2 == 1:
+        mediana = arreglo_ordenado[n // 2]
+    # Si la cantidad de elementos es par
+    else:
+        mediana = (arreglo_ordenado[n // 2 - 1] + arreglo_ordenado[n // 2]) / 2
+
+    return mediana
+
+
 def create_first_solution(codification: str, limits: int) -> list[int]:
     first_solution = []
 

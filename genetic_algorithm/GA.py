@@ -50,6 +50,7 @@ class GeneticAlgorithm:
         stopping_criteria_type: Literal[
             "function_calls", "generations", "found_optimal", "nochangebest"
         ] = "nochangebest",
+        verbose=False,
         max_call_functions: int = None,
         max_generations: int = None,
         optimal_solution: int = None,
@@ -93,6 +94,7 @@ class GeneticAlgorithm:
             self.mutation_operator = Shuffle
         elif mutation_operator == "swap":
             self.mutation_operator = Swap
+        self.verbose = verbose
         self.precision = precision
         self.variables = variables
         self.min_or_max = min_or_max
@@ -220,28 +222,29 @@ class GeneticAlgorithm:
             population_selected = self.select_parents(population_evaluated)
             population_cross = self.crossover(population_selected)
             population = self.mutate(population_cross)
-
-            if self.problem_type == "COP":
-                sys.stderr.write(
-                    "\r Generations %d | call_functions %d | Best: %.2f"
-                    % (
-                        self.generations,
-                        self.function_call_counter,
-                        self.actual_best.fitness,
+            if self.verbose:
+                if self.problem_type == "COP":
+                    sys.stderr.write(
+                        "\r Generations %d | call_functions %d | Best: %.2f"
+                        % (
+                            self.generations,
+                            self.function_call_counter,
+                            self.actual_best.fitness,
+                        )
                     )
-                )
-            else:
-                sys.stderr.write(
-                    f"\r Generations %d | call_functions %d | Best: %.{decimal}f"
-                    % (
-                        self.generations,
-                        self.function_call_counter,
-                        self.actual_best.fitness,
+                    sys.stderr.flush()
+                else:
+                    sys.stderr.write(
+                        f"\r Generations %d | call_functions %d | Best: %.{decimal}f"
+                        % (
+                            self.generations,
+                            self.function_call_counter,
+                            self.actual_best.fitness,
+                        )
                     )
-                )
+                    sys.stderr.flush()
             self.generations += 1
-            sys.stderr.flush()
-        sys.stderr.flush()
+
         if self.problem_type == "COP":
             sys.stderr.write(
                 "\r Generations %d | call_functions %d | Best: %.2f"
@@ -261,6 +264,7 @@ class GeneticAlgorithm:
                 )
             )
 
+        print(f"Solucion: {self.actual_best.genotype}")
         tiempo_fin = time.time()
         tiempo_total = tiempo_fin - tiempo_inicio
         print(

@@ -15,6 +15,7 @@ class SimulatedAnnealing(object):
         ] = "function_calls",
         max_call_functions=100,
         restriction_fun=None,
+        verbose=False,
         problem_type: Literal["COP", "BenchMark"] = "BenchMark",
         codification: Literal["binary", "permutation", "combination", "real"] = "real",
         cooling: Literal["linear", "geometric", "logarithmic"] = "geometric",
@@ -29,6 +30,7 @@ class SimulatedAnnealing(object):
         temperature: float = 200,
         final_temperature: float = 0.1,
     ) -> None:
+        self.verbose = verbose
         self.stopping_criteria_type = stopping_criteria_type
         self.max_call_functions = max_call_functions
         self.restriction_fun = restriction_fun
@@ -136,7 +138,8 @@ class SimulatedAnnealing(object):
         self.cost_ = []
         self.function_call_counter = 0
         actual_solutions = self.create_first_solution()
-        epoch = 0
+        self.epoch = 0
+        self.i = 0
         number_tested_solution = 0
         aceptanced = 100
         decimal = len(str(calcular_modulo(self.precision))) - 1
@@ -145,8 +148,8 @@ class SimulatedAnnealing(object):
         while self.stopping_criteria():
 
             number_worst_solution_acepted = 0
-            i = 0
-            while i < self.equilibrium:
+            self.i = 0
+            while self.i < self.equilibrium:
                 random_solutions = self.create_neighbor_solution(actual_solutions)
                 number_tested_solution += 1
                 fxyrand = objetive(random_solutions)
@@ -170,23 +173,41 @@ class SimulatedAnnealing(object):
                 else:
                     self.cost_.append(fxy)
 
-                epoch_strlen = len(str(epoch))
+                self.epoch_strlen = len(str(self.epoch))
+                if self.verbose:
+                    imprimir_valores(
+                        decimal,
+                        self.epoch_strlen,
+                        self.epoch,
+                        self.i,
+                        self.temperature,
+                        fxy,
+                        aceptanced,
+                        self.function_call_counter,
+                    )
+                self.i += 1
+                self.epoch += 1
+            self.aceptanced = (
+                number_worst_solution_acepted * 100 / number_tested_solution
+            )
+            self.temperature = self.update_temperature(self.temperature, self.i)
 
-                imprimir_valores(
-                    decimal,
-                    epoch_strlen,
-                    epoch,
-                    i,
-                    self.temperature,
-                    fxy,
-                    aceptanced,
-                    self.function_call_counter,
-                )
-                i += 1
-                epoch += 1
-            aceptanced = number_worst_solution_acepted * 100 / number_tested_solution
-            self.temperature = self.update_temperature(self.temperature, i)
-
+        print(
+            "\r%0*d Epoch | Equilibrium %d | Temperature %.2f "
+            "| Cost function: %.{}f  | Aceptance: %.2f | Function Call: %d".format(
+                decimal
+            )
+            % (
+                self.epoch_strlen,
+                self.epoch + 1,
+                self.i + 1,
+                self.temperature,
+                fxy,
+                aceptanced,
+                self.function_call_counter,
+            )
+        )
+        print(f"Solucion: {optimal}")
         tiempo_fin = time.time()
         tiempo_total = tiempo_fin - tiempo_inicio
         print(
